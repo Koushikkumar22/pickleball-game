@@ -2,7 +2,23 @@
 
 ## Overview
 
-This is a web-based advanced Pickleball game built with HTML5, CSS3, and vanilla JavaScript. The game features multiple difficulty levels, power-ups, achievements system, mobile optimization, and various game modes including tournament play. It's designed as a browser-based game with full mobile responsiveness and includes analytics tracking via Google Analytics.
+This is a web-based advanced Pickleball game built with HTML5, CSS3, and vanilla JavaScript. The game has been completely enhanced from a simple static game into an advanced, addictive, mobile-optimized gaming experience. Features include multiple game modes, power-ups system, comprehensive achievements, particle effects, responsive design, touch controls, AI difficulty levels, and persistent statistics tracking. It's designed as a browser-based game with full mobile responsiveness and includes analytics tracking via Google Analytics.
+
+## Recent Changes
+
+### September 19, 2025 - Major Enhancement Update
+- **Complete Game Rewrite**: Transformed from simple pong-style game to advanced gaming experience
+- **Mobile Optimization**: Added touch controls, responsive design, mobile-first approach
+- **Multiple Game Modes**: Single Player, Two Player, Tournament, Time Attack, Survival modes
+- **Power-ups System**: Speed boost, paddle size, multi-ball effects, slow motion
+- **Achievement System**: 20 unlockable achievements with local persistence
+- **Advanced AI**: Multiple difficulty levels (Easy, Medium, Hard, Insane) with realistic behavior
+- **Particle Effects**: Dynamic visual effects for hits, power-ups, and impacts
+- **Statistics Tracking**: Persistent game stats, high scores, play time tracking
+- **Modern UI/UX**: Loading screens, animated menus, popup notifications
+- **Sound System**: Comprehensive audio with toggleable effects and background music
+- **Settings Management**: Customizable ball speed, paddle size, visual effects
+- **Combo System**: Hit streak tracking with visual feedback
 
 ## User Preferences
 
