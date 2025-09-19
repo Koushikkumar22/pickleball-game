@@ -264,10 +264,12 @@ h2 {
 /* Game Screen */
 #game-screen {
   padding: 10px;
-  min-height: 100vh;
+  min-height: 100dvh;
+  height: 100dvh;
   justify-content: flex-start;
   align-items: stretch;
   flex-direction: column;
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
 }
 
 .game-ui {
@@ -324,8 +326,8 @@ h2 {
 #game-area {
   position: relative;
   width: 100%;
-  max-width: 900px;
-  height: 400px;
+  max-width: min(900px, 90vw);
+  height: min(400px, 50vh);
   background: linear-gradient(45deg, var(--success-color), #66BB6A);
   margin: 0 auto;
   border: 3px solid var(--text-light);
@@ -334,6 +336,7 @@ h2 {
   box-shadow: var(--shadow);
   flex: 1;
   max-height: 60vh;
+  touch-action: none;
 }
 
 #net {
@@ -455,6 +458,7 @@ h2 {
   backdrop-filter: blur(10px);
   border-radius: var(--border-radius);
   margin-top: 10px;
+  margin-bottom: max(10px, env(safe-area-inset-bottom));
 }
 
 .control-pad {
@@ -464,8 +468,8 @@ h2 {
 }
 
 .control-btn {
-  width: 60px;
-  height: 60px;
+  width: max(60px, 48px);
+  height: max(60px, 48px);
   border: none;
   border-radius: 50%;
   background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
@@ -478,6 +482,7 @@ h2 {
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
+  touch-action: manipulation;
 }
 
 .control-btn:active {
@@ -561,15 +566,23 @@ h2 {
   position: fixed;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) scale(0.8);
   background: rgba(0, 0, 0, 0.9);
   padding: 30px;
   border-radius: var(--border-radius);
   text-align: center;
   z-index: 9999;
-  animation: popupSlide 0.5s ease-out;
   backdrop-filter: blur(20px);
   border: 2px solid var(--accent-color);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#achievement-popup.visible, #power-up-notification.visible {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+  pointer-events: auto;
 }
 
 #combo-display {

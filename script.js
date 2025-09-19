@@ -11,6 +11,10 @@ class AdvancedPickleballGame {
         this.loadStats();
         this.setupEventListeners();
         this.showLoadingScreen();
+        
+        // Achievement popup timeout
+        this._achievementTimeout = null;
+        this._powerUpTimeout = null;
     }
 
     initializeElements() {
@@ -51,9 +55,10 @@ class AdvancedPickleballGame {
     }
 
     initializeGameState() {
-        // Game dimensions
+        // Game dimensions - will be updated based on container
         this.gameWidth = 900;
         this.gameHeight = 400;
+        this.gameScale = 1;
         
         // Ball properties
         this.ball.x = this.gameWidth / 2;
@@ -210,6 +215,22 @@ class AdvancedPickleballGame {
         Object.values(this.screens).forEach(screen => {
             screen.classList.add('hidden');
         });
+        
+        // Force hide any open popups during screen transitions
+        this.hideAchievementPopup();
+        this.hidePowerUpNotification();
+    }
+    
+    hidePowerUpNotification() {
+        const popup = document.getElementById('power-up-notification');
+        
+        if (this._powerUpTimeout) {
+            clearTimeout(this._powerUpTimeout);
+            this._powerUpTimeout = null;
+        }
+        
+        popup.classList.remove('visible');
+        popup.classList.add('hidden');
     }
 
     setupEventListeners() {
@@ -268,12 +289,23 @@ class AdvancedPickleballGame {
         document.addEventListener('keydown', (e) => this.handleKeyDown(e));
         document.addEventListener('keyup', (e) => this.handleKeyUp(e));
         
-        // Touch events for mobile
-        document.addEventListener('touchstart', (e) => e.preventDefault());
-        document.addEventListener('touchmove', (e) => e.preventDefault());
+        // Touch events for mobile (prevent scrolling during game)
+        document.addEventListener('touchstart', (e) => {
+            if (e.target.closest('#game-area') || e.target.closest('#mobile-controls')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        document.addEventListener('touchmove', (e) => {
+            if (e.target.closest('#game-area') || e.target.closest('#mobile-controls')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
         
         // Window events
         window.addEventListener('resize', () => this.handleResize());
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => this.handleResize(), 100);
+        });
         window.addEventListener('blur', () => this.autoPause());
         
         // Click outside popup to close
@@ -352,18 +384,23 @@ class AdvancedPickleballGame {
         this.gameMode = mode;
         this.difficulty = this.settings.difficulty;
         this.setupGameMode();
-        this.resetGame();
         this.hideAllScreens();
         this.screens.game.classList.remove('hidden');
-        this.gameRunning = true;
-        this.gameStartTime = Date.now();
-        this.gameModeDisplay.textContent = this.formatGameMode(mode);
         
-        // Update stats
-        this.stats.gamesPlayed++;
-        this.saveStats();
-        
-        this.gameLoop();
+        // Update game area size for responsive design
+        setTimeout(() => {
+            this.updateGameAreaSize();
+            this.resetGame();
+            this.gameRunning = true;
+            this.gameStartTime = Date.now();
+            this.gameModeDisplay.textContent = this.formatGameMode(mode);
+            
+            // Update stats
+            this.stats.gamesPlayed++;
+            this.saveStats();
+            
+            this.gameLoop();
+        }, 50); // Small delay to ensure DOM is updated
     }
 
     setupGameMode() {
@@ -992,8 +1029,30 @@ class AdvancedPickleballGame {
 
     updateGameAreaSize() {
         const rect = this.gameArea.getBoundingClientRect();
-        this.gameWidth = rect.width;
-        this.gameHeight = rect.height;
+        this.gameWidth = rect.width - 6; // Account for borders
+        this.gameHeight = rect.height - 6;
+        this.gameScale = Math.min(this.gameWidth / 900, this.gameHeight / 400);
+        
+        // Update paddle height based on screen size
+        this.paddleHeight = Math.max(50, this.settings.paddleSize * this.gameScale);
+        
+        // Reposition game elements if game is running
+        if (this.gameRunning) {
+            this.repositionGameElements();
+        }
+    }
+    
+    repositionGameElements() {
+        // Keep ball in bounds
+        this.ball.x = Math.min(this.ball.x, this.gameWidth - 20);
+        this.ball.y = Math.min(this.ball.y, this.gameHeight - 20);
+        
+        // Keep paddles in bounds
+        this.paddleLeft.y = Math.min(this.paddleLeft.y, this.gameHeight - this.paddleHeight);
+        this.paddleRight.y = Math.min(this.paddleRight.y, this.gameHeight - this.paddleHeight);
+        
+        this.updatePaddleSize();
+        this.renderGame();
     }
 
     updatePaddleSize() {
@@ -1148,14 +1207,43 @@ class AdvancedPickleballGame {
         const name = document.getElementById('achievement-name');
         const desc = document.getElementById('achievement-desc');
         
+        // Clear any existing timeout
+        if (this._achievementTimeout) {
+            clearTimeout(this._achievementTimeout);
+            this._achievementTimeout = null;
+        }
+        
         name.textContent = achievement.name;
         desc.textContent = achievement.desc;
         
         popup.classList.remove('hidden');
+        popup.classList.add('visible');
         
-        setTimeout(() => {
-            popup.classList.add('hidden');
+        // Set new timeout
+        this._achievementTimeout = setTimeout(() => {
+            this.hideAchievementPopup();
         }, 3000);
+        
+        // Auto-hide on visibility change (tab switch, etc.)
+        const hideOnVisibilityChange = () => {
+            if (document.hidden) {
+                this.hideAchievementPopup();
+                document.removeEventListener('visibilitychange', hideOnVisibilityChange);
+            }
+        };
+        document.addEventListener('visibilitychange', hideOnVisibilityChange);
+    }
+    
+    hideAchievementPopup() {
+        const popup = document.getElementById('achievement-popup');
+        
+        if (this._achievementTimeout) {
+            clearTimeout(this._achievementTimeout);
+            this._achievementTimeout = null;
+        }
+        
+        popup.classList.remove('visible');
+        popup.classList.add('hidden');
     }
 
     showPowerUpNotification(type) {
@@ -1182,7 +1270,16 @@ class AdvancedPickleballGame {
     }
 
     hidePopup(popup) {
-        popup.classList.add('hidden');
+        // Delegate to specific popup hide methods that handle timeouts
+        if (popup.id === 'achievement-popup') {
+            this.hideAchievementPopup();
+        } else if (popup.id === 'power-up-notification') {
+            this.hidePowerUpNotification();
+        } else {
+            // Fallback for other popups
+            popup.classList.remove('visible');
+            popup.classList.add('hidden');
+        }
     }
 
     saveAchievements() {
